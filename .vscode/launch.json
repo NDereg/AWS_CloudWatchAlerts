@@ -1,0 +1,37 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "Set-FECloudWatch",
+            "script": "${workspaceRoot}/lib/Set-FECloudWatch.ps1",
+            "args": [],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "Main",
+            "script": "${workspaceRoot}/Main.ps1",
+            "args": [],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "CallScript",
+            "script": "${workspaceRoot}/scripts/CallScript.ps1",
+            "args": [],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "Set-CloudWatch",
+            "script": "${workspaceRoot}/lib/Set-CloudWatchAlarm.ps1",
+            "args": [],
+            "cwd": "${workspaceRoot}"
+        }
+    ]
+}

@@ -1,0 +1,53 @@
+// remove these comments once you understand them to keep your code clean
+{
+    "default": {
+        "env": {
+            "prod": "MyProfileName", // Set-AWSCredetial -AccessKey asdfasdfasdf -SecretKey asdfasdfasdf -StoreAs MyProfileName
+            "rgn": "aws-region", // us-east-1
+            "acct": "aws-account-number" // 1234567890123
+        },
+        "alarms": [ // this JSON file can be modified easily to setup Alerts on; one or multiple "srv" and/or one or multiple "tpc"
+            {
+                "srv": "server-name", // Name of the server
+                "tpc": "sns-topic-name", // SNS Topic
+                "per": 60, // Period. Static settings, can only be set to; 10s, 30s, 60s, 300s etc.
+                "eval": 2, // Evaluation. Dynamic settings, can be set to 1, 2, 3, 4 etc. (Period 60s * Evaluation 2 = 120 seconds)
+                "thr": 40 // Threshold i.e. 40% CPU
+            },
+            {
+                "srv": "server-name",
+                "tpc": "sns-topic-name-2",
+                "per": 60,
+                "eval": 8,
+                "thr": 95
+            },
+            {
+                "srv": "server-name",
+                "tpc": "sns-topic-name",
+                "per": 300,
+                "eval": 1,
+                "thr": 70
+            }
+        ],
+        "sns": [
+            {
+                "tpc": "sns-topic-name", // SNS Topic. Can be existing or a new one to be created
+                "ept": "example@example.com" // Email subscription for notifications
+            },
+            {
+                "tpc": "sns-topic-name-2",
+                "ept": "example@example.com"
+            }
+        ],
+        "cpuMetrics": { // This Metric's pupose was to measure CPU
+            "dim": "CPU", // aws static naming convention
+            "metr": "CPUUtilization", // aws static naming convention
+            "unit": "Percent", // aws static naming convention
+            "stat": "Average", // aws static naming convention
+            "name": "AWS/EC2", // aws static naming convention
+            "comp": "GreaterThanOrEqualToThreshold", // aws static naming convention
+            "desc": "Alarm when CPU exceeds", // aws static naming convention
+            "delay": "00:15:00" // servers launched in their first 15 minutes, the alarms will not be created. This is to avoid initial spam
+        } // while the servers are spinning up. You may choose to set this to any number you'd like
+    }
+}
