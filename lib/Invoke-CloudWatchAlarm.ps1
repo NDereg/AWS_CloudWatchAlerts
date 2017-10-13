@@ -24,17 +24,35 @@ function Get-CloudWatchAlarm {
     Param($cpu, $alarm)
     
     $prefix = "$($alarm.srv)" + "-" + "$($cpu.dim)" + "-" + "$($alarm.thr)"
-    $awsAlarm = Get-CWAlarm | Where-Object {$_.AlarmName -like "$prefix*"}
+    $awsAlarms = Get-CWAlarm | Where-Object {$_.AlarmName -like "$prefix*"}
     $awsEc2 = Get-EC2Instance -Filter @{Name = "tag-value"; Values = $alarm.srv}
     $instances = $awsEc2.Instances
+    foreach ($awsAlarm in $awsAlarms) {
+        Get-InsufficientAlarm $instances $awsAlarm
+    }
     foreach ($instance in $instances) {
-        Set-CloudWatchAlarm $instance $prefix $awsAlarm $cpu $alarm
+        Set-CloudWatchAlarm $instance $prefix $awsAlarms $cpu $alarm
+    }
+}
+
+function Get-InsufficientAlarm {
+    [CmdLetBinding()]
+    Param($instances, $awsAlarm)
+    $instanceIdArray = @()
+    foreach ($instance in $instances) {
+        $instanceIdArray += $instance.InstanceId
+    }
+    $alarmId = $awsAlarm.Dimensions.Value
+    # Delete straggler Alarm (alarm exists but Ec2 doesn't)
+    if ($alarmId -notin $instanceIdArray) {
+        $alarmName = $awsAlarm.AlarmName
+        Remove-CloudWatchAlarm $alarmName
     }
 }
 
 function Set-CloudWatchAlarm {
     [CmdLetBinding()]
-    Param($instance, $prefix, $awsAlarm, $cpu, $alarm)
+    Param($instance, $prefix, $awsAlarms, $cpu, $alarm)
     
     $date = Get-Date
     $delay = $cpu.delay
@@ -43,7 +61,7 @@ function Set-CloudWatchAlarm {
     $time = $launch + $delay
     $running = $instance.State.Name
     $alarmName = $prefix + "-" + $id
-    $alarmAvail = $awsAlarm.AlarmName | Where-Object {$_ -like $alarmName }
+    $alarmAvail = $awsAlarms.AlarmName | Where-Object {$_ -like $alarmName }
     # If (ec2 is not running) and (alarm exists) and (launched within 15 mins) the following loop will not execute
     if ($running -eq "running" -and ([string]::IsNullOrEmpty($alarmAvail)) -and $date -gt $time) {
         Add-CloudWatchAlarm $dim $cpu $id $alarm $alarmName
