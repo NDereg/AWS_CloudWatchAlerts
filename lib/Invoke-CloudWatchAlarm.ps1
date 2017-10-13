@@ -27,15 +27,16 @@ function Get-CloudWatchAlarm {
     $awsAlarms = Get-CWAlarm | Where-Object {$_.AlarmName -like "$prefix*"}
     $awsEc2 = Get-EC2Instance -Filter @{Name = "tag-value"; Values = $alarm.srv}
     $instances = $awsEc2.Instances
+    # Loop is executed for orphaned Alarm(s)
     foreach ($awsAlarm in $awsAlarms) {
-        Get-InsufficientAlarm $instances $awsAlarm
+        Get-OrphanedAlarm $instances $awsAlarm
     }
     foreach ($instance in $instances) {
         Set-CloudWatchAlarm $instance $prefix $awsAlarms $cpu $alarm
     }
 }
 
-function Get-InsufficientAlarm {
+function Get-OrphanedAlarm {
     [CmdLetBinding()]
     Param($instances, $awsAlarm)
     $instanceIdArray = @()
@@ -43,7 +44,6 @@ function Get-InsufficientAlarm {
         $instanceIdArray += $instance.InstanceId
     }
     $alarmId = $awsAlarm.Dimensions.Value
-    # Delete straggler Alarm (alarm exists but Ec2 doesn't)
     if ($alarmId -notin $instanceIdArray) {
         $alarmName = $awsAlarm.AlarmName
         Remove-CloudWatchAlarm $alarmName
@@ -66,7 +66,7 @@ function Set-CloudWatchAlarm {
     if ($running -eq "running" -and ([string]::IsNullOrEmpty($alarmAvail)) -and $date -gt $time) {
         Add-CloudWatchAlarm $dim $cpu $id $alarm $alarmName
     }
-    # If (ec2 is terminated) the following loop will execute
+    # Else if (ec2 is terminated) the following loop will execute
     elseif ($running -eq "terminated") {
         Remove-CloudWatchAlarm $alarmName
     }
